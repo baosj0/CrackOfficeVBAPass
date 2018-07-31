@@ -29,7 +29,6 @@ int Fuckit(HANDLE hProcess, MODULEENTRY32* me32, DWORD offset)
 }
 
 
-
 int main(int argc, char** argv)
 {
 	//指定office进程pid
@@ -44,6 +43,7 @@ int main(int argc, char** argv)
 	else if (argc > 2)
 	{
 		printf("only 1 parameter accepted ||| 仅支持一个参数\n");
+		system("pause");
 		return 0;
 	}
 	else
@@ -52,13 +52,16 @@ int main(int argc, char** argv)
 		if (nPID == 0)
 		{
 			printf("PID must be digits ||| 参数必须全为数字\n");
+			system("pause");
 			return 0;
 		}
 	}
-	HANDLE hProcess = OpenProcess(PROCESS_VM_READ| PROCESS_VM_WRITE | PROCESS_VM_OPERATION | PROCESS_QUERY_INFORMATION, FALSE, nPID);
+	HANDLE hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION | PROCESS_QUERY_INFORMATION, FALSE, nPID);
 	if (hProcess == INVALID_HANDLE_VALUE)
 	{
 		printf("open process handle failed ||| 打开目标进程失败\n");
+		system("pause");
+		return 0;
 	}
 	BOOL bIs32 = FALSE;
 	IsWow64Process(hProcess, &bIs32);
@@ -76,10 +79,10 @@ int main(int argc, char** argv)
 	Module32First(hSnap, &me32);
 
 	BOOL fucked = FALSE;
-	do 
+	do
 	{
 		_strlwr_s(me32.szModule);
-		if ((!strcmp(me32.szModule, "vbe7.dll"))|| (!strcmp(me32.szModule, "vbe6.dll")))
+		if ((!strcmp(me32.szModule, "vbe7.dll")) || (!strcmp(me32.szModule, "vbe6.dll")))
 		{
 			//printf("lib found\n");
 			switch (me32.modBaseSize)
@@ -127,7 +130,7 @@ int main(int argc, char** argv)
 				default:
 				{
 					printf("Unknown Office Version ||| 未知office版本\n");
-					break;
+					goto end;
 				}
 			}
 		}
@@ -136,8 +139,11 @@ int main(int argc, char** argv)
 			printf("Success ||| 成功\n");
 			break;
 		}
-	} while (Module32Next(hSnap,&me32));
+	} while (Module32Next(hSnap, &me32));
 
+	CloseHandle(hProcess);
+	CloseHandle(hSnap);
+end:
 	printf("Quit\n");
 	system("pause");
 	return 0;
